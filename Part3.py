@@ -43,7 +43,8 @@ def calculate_distance_matrix(towers_dict):
     
     # Calculate distances for all pairs
     for i, call_sign1 in enumerate(call_signs):
-        lat1, lon1 = towers_dict[call_sign1]
+        lat1 = towers_dict[call_sign1][0]
+        lon1 = towers_dict[call_sign1][1]
         
         for j, call_sign2 in enumerate(call_signs):
             # Skip if same tower or already calculated
@@ -51,7 +52,8 @@ def calculate_distance_matrix(towers_dict):
                 if i == j:
                     distance_matrix[i][j] = 0
                 else:
-                    lat2, lon2 = towers_dict[call_sign2]
+                    lat2 = towers_dict[call_sign2][0]
+                    lon2 = towers_dict[call_sign2][1]
                     distance = haversine_distance(lat1, lon1, lat2, lon2)
                     # Store distance in both positions of the matrix
                     distance_matrix[i][j] = distance
@@ -61,35 +63,42 @@ def calculate_distance_matrix(towers_dict):
     distance_df = pd.DataFrame(distance_matrix, index=call_signs, columns=call_signs)
     return distance_df
 
-def create_adjacency_matrix(distance_df, threshold_miles=13.7):
+def create_adjacency_matrix(distance_df, towers_dict):
     """
     Convert distance matrix to binary adjacency matrix:
     - 1 if distance <= threshold
     - 0 if distance > threshold
+    
+    Reads individual thresholds for each tower from a CSV file.
     """
-    # Convert miles to kilometers (1 mile = 1.60934 km)
-    threshold_km = threshold_miles * 1.60934
+    # Read thresholds from CSV file
+    thresholds = {}
+    call_signs = distance_df.index.tolist()
     
     # Create a copy of the distance matrix
     adjacency_df = distance_df.copy()
     
-    # Apply threshold to create binary adjacency matrix
-    adjacency_df = (adjacency_df <= threshold_km).astype(int)
+    # Apply tower-specific thresholds to create binary adjacency matrix
+    for i, tower in enumerate(adjacency_df.index):
+        threshold_km = towers_dict.get(tower)[2]
+        # Apply threshold for this specific tower's connections
+        adjacency_df.iloc[i, :] = (adjacency_df.iloc[i, :] <= threshold_km).astype(int)
     
     # Set diagonal to 0 (no self-loops)
     for i in range(len(adjacency_df)):
         adjacency_df.iloc[i, i] = 0
         
     return adjacency_df
-
-def create_network_graph(adjacency_df, towers_dict=None, threshold_miles=13.7):
+        
+        
+def create_network_graph(adjacency_df, towers_dict=None, threshold_csv_path=None):
     """
     Create a network graph from the adjacency matrix with greedy coloring
     
     Args:
         adjacency_df: Binary adjacency matrix
         towers_dict: Dictionary with call signs as keys and (lat, long) tuples as values
-        threshold_miles: Distance threshold in miles
+        threshold_csv_path: Path to CSV file containing threshold values
     """
     # Create a graph
     G = nx.from_pandas_adjacency(adjacency_df)
@@ -137,8 +146,11 @@ def create_network_graph(adjacency_df, towers_dict=None, threshold_miles=13.7):
     # Draw labels
     nx.draw_networkx_labels(G, pos, font_size=8, font_family='sans-serif')
     
-    # Add title with color information
-    plt.title(f"Radio Tower Network (Threshold: {threshold_miles} miles, Colors: {num_colors})")
+    # Add title with threshold information
+    if threshold_csv_path:
+        plt.title(f"Radio Tower Network (Using tower-specific thresholds, Colors: {num_colors})")
+    else:
+        plt.title(f"Radio Tower Network (Colors: {num_colors})")
     
     # Add a legend for colors
     legend_handles = [plt.Line2D([0], [0], marker='o', color='w', 
@@ -243,7 +255,8 @@ def load_tower_data(file_path):
                 try:
                     lat = float(row[1].replace("\xa0", "").strip())
                     lon = float(row[2].replace("\xa0", "").strip())
-                    towers_dict[call_sign] = (lat, lon)
+                    radius = float(row[3].replace("\xa0", "").strip()) if len(row) > 3 else 13.7  # Default radius
+                    towers_dict[call_sign] = (lat, lon, radius)
                 except ValueError:
                     print(f"Warning: Invalid coordinates for {call_sign}, skipping.")
     
@@ -313,14 +326,14 @@ def main():
     print(distance_df.iloc[:5, :5].round(2))  # Show just a sample
     
     # Convert to adjacency matrix based on threshold
-    adjacency_df = create_adjacency_matrix(distance_df, threshold_miles)
+    adjacency_df = create_adjacency_matrix(distance_df, towers_dict)
     
     print(f"\nAdjacency Matrix (1 = within {threshold_miles} miles, 0 = beyond, sample):")
     print(adjacency_df.iloc[:5, :5])  # Show just a sample
     
     # Create and visualize network graph with coloring
     print("\nCreating network graph with greedy coloring...")
-    G, colors_dict = create_network_graph(adjacency_df, towers_dict, threshold_miles)
+    G, colors_dict = create_network_graph(adjacency_df, towers_dict, "US_data_With_freq.csv")
     
     # Network analysis
     analyze_network(G)
