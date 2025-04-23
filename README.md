@@ -1,6 +1,6 @@
 # Radio Tower Proble
 
-## Made 
+## Made By
 
 This was made in conjunction with Tony Krystofiak physics and computer science double major at Saint John's.
 
