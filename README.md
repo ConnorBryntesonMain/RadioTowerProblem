@@ -44,6 +44,7 @@ This approach doesn't always guarantee the optimal solution but provides a solut
    - The script will process the data from the CSV files and output the selected tower locations.
 
 ## Results
+![Screenshot From 2025-04-22 23-25-35](https://github.com/user-attachments/assets/9d25886d-d5fb-43ca-b59f-2828344f457d)
 
 Upon execution, the script outputs a list of selected tower locations that collectively cover the entire target area.  
 Visual representations in the `RadioTowerImages` directory provide a graphical overview of the coverage.
