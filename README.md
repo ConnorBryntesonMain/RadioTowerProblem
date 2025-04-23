@@ -1,4 +1,8 @@
-# Radio Tower Problem
+# Radio Tower Proble
+
+## Made 
+
+This was made in conjunction with Tony Krystofiak physics and computer science double major at Saint John's.
 
 ## Overview
 
@@ -53,4 +57,4 @@ Visual representations in the `RadioTowerImages` directory provide a graphical o
 
 - **Algorithm Optimization**: Explore more advanced algorithms (e.g., genetic algorithms, linear programming) to potentially find more optimal solutions.
 - **User Interface**: Develop a GUI to allow users to input custom data and visualize results interactively.
-- **Real-world Data Integration**: Incorporate real geographical data to apply the solution to actual scenarios.
+- **Real-world Data Integration**: Incorporate real geographical data to apply the solution to actual scenarios. I was able to finsih this up with the help of one Tony Krystofiak, he enabled me to get real world data on what we expanded on.
